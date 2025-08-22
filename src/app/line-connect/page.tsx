@@ -197,7 +197,7 @@ export default function LineConnectPage() {
     }
     return {
       title: 'LINE連携開始',
-      description: '決済完了後、LINE IDとメールアドレスを紐づけてください'
+      description: 'LINE IDとメールアドレスを紐づけてください'
     };
   };
 
@@ -253,23 +253,35 @@ export default function LineConnectPage() {
                   </p>
                 </div>
 
-                {/* LINE IDとメールアドレス紐付けの説明 */}
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                {/* LINE IDとメールアドレスの紐付けメリット説明 */}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
                   <div className="flex items-start">
-                    <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                    <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
                       <svg className="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-sm font-medium text-blue-800 mb-2">
+                      <h3 className="text-sm font-semibold text-blue-800 mb-3">
                         LINE IDとメールアドレスの紐付けについて
                       </h3>
-                      <div className="text-xs text-blue-700 space-y-1">
-                        <p>• サポートスタッフが個別連絡（施設の質問など）に対応いたします</p>
-                        <p>• ご連絡いただいたLINE IDとOHAKO fitness studio会員の情報を即時照会できるため、お問い合わせ内容の詳細をスムーズに確認できます</p>
-                        <p>• 新しいプログラム公開・営業日時の変更など、大切なお知らせを確実にお受け取り頂けます</p>
-                        <p>• 今後の会員限定特典や招待制度などの対象になります</p>
+                      <div className="text-xs text-blue-700 space-y-2">
+                        <p className="flex items-start">
+                          <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                          サポートスタッフが個別連絡（施設の質問など）に対応いたします
+                        </p>
+                        <p className="flex items-start">
+                          <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                          ご連絡いただいたLINE IDとOHAKO fitness studio会員の情報を即時照会できるため、お問い合わせ内容の詳細をスムーズに確認できます
+                        </p>
+                        <p className="flex items-start">
+                          <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                          新しいプログラム公開・営業日時の変更など、大切なお知らせを確実にお受け取り頂けます
+                        </p>
+                        <p className="flex items-start">
+                          <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                          今後の会員限定特典や招待制度などの対象になります
+                        </p>
                       </div>
                     </div>
                   </div>
