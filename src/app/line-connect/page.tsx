@@ -51,6 +51,11 @@ export default function LineConnectPage() {
       
       // 友達追加の案内を表示
       setShowFriendAddGuide(true);
+      
+      // LINEログイン完了後、自動的に友達追加ページを開く
+      setTimeout(() => {
+        handleAddFriend();
+      }, 1000); // 1秒後に友達追加を実行
     }
   }, []);
 
@@ -144,10 +149,12 @@ export default function LineConnectPage() {
           handleAddFriend();
         }, 500); // 0.5秒後に友達追加を実行
         
-        // 成功時はフォームをクリア
-        setEmail('');
-        setLineUserInfo(null);
-        setShowFriendAddGuide(false);
+        // 友達追加実行後、フォームをクリア
+        setTimeout(() => {
+          setEmail('');
+          setLineUserInfo(null);
+          setShowFriendAddGuide(false);
+        }, 1000);
       } else {
         setMessage({
           type: 'error',
@@ -166,27 +173,40 @@ export default function LineConnectPage() {
 
   // 友達追加ボタンのクリック処理
   const handleAddFriend = () => {
-    // LINE公式アカウントの友達追加URLを開く
-    const lineAddFriendUrl = process.env.NEXT_PUBLIC_LINE_ADD_FRIEND_URL || 'https://s.lmes.jp/landing-qr/2007884698-P157Mx1x?uLand=GM7TbC';
-    
-    // 新しいタブで友達追加ページを開く
-    window.open(lineAddFriendUrl, '_blank');
-    
-    // 友達追加実行フラグを設定
-    setFriendAddExecuted(true);
-    
-    // カウントダウン開始（より短い時間に設定）
-    let remainingTime = 3;
-    const countdownInterval = setInterval(() => {
-      remainingTime -= 1;
-      setCountdown(remainingTime);
+    try {
+      // LINE公式アカウントの友達追加URLを開く
+      const lineAddFriendUrl = process.env.NEXT_PUBLIC_LINE_ADD_FRIEND_URL || 'https://s.lmes.jp/landing-qr/2007884698-P157Mx1x?uLand=GM7TbC';
       
-      if (remainingTime <= 0) {
-        clearInterval(countdownInterval);
-        // 友達追加完了後、ホームページにリダイレクト
-        window.location.href = 'https://ohako-fitness.com/';
+      // 新しいタブで友達追加ページを開く
+      const newWindow = window.open(lineAddFriendUrl, '_blank');
+      
+      // ポップアップブロッカーが有効な場合の処理
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        // ポップアップがブロックされた場合、現在のタブで開く
+        window.location.href = lineAddFriendUrl;
       }
-    }, 1000);
+      
+      // 友達追加実行フラグを設定
+      setFriendAddExecuted(true);
+      
+      // カウントダウン開始（より短い時間に設定）
+      let remainingTime = 3;
+      const countdownInterval = setInterval(() => {
+        remainingTime -= 1;
+        setCountdown(remainingTime);
+        
+        if (remainingTime <= 0) {
+          clearInterval(countdownInterval);
+          // 友達追加完了後、ホームページにリダイレクト
+          window.location.href = 'https://ohako-fitness.com/';
+        }
+      }, 1000);
+    } catch (error) {
+      console.error('友達追加ページの開設に失敗しました:', error);
+      // エラーが発生した場合、直接URLに遷移
+      const lineAddFriendUrl = process.env.NEXT_PUBLIC_LINE_ADD_FRIEND_URL || 'https://s.lmes.jp/landing-qr/2007884698-P157Mx1x?uLand=GM7TbC';
+      window.location.href = lineAddFriendUrl;
+    }
   };
 
   // 現在の段階に応じたタイトルと説明を取得
