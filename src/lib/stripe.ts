@@ -7,12 +7,12 @@ if (!stripeSecretKey) {
 }
 
 const stripe = new Stripe(stripeSecretKey!, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-07-30.basil',
 });
 
 console.log('Stripe初期化完了:', {
   hasSecretKey: !!stripeSecretKey,
-  apiVersion: '2024-12-18.acacia'
+  apiVersion: '2025-07-30.basil'
 });
 
 export async function findCustomerByEmail(email: string): Promise<StripeCustomerSearchResponse> {
