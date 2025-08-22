@@ -14,6 +14,8 @@ export default function LineConnectPage() {
   } | null>(null);
   const [state, setState] = useState<string>('');
   const [showFriendAddGuide, setShowFriendAddGuide] = useState(false);
+  const [friendAddExecuted, setFriendAddExecuted] = useState(false);
+  const [countdown, setCountdown] = useState(5);
 
   // URLパラメータからLINEログイン結果を取得
   useEffect(() => {
@@ -136,6 +138,12 @@ export default function LineConnectPage() {
           type: 'success',
           text: data.message,
         });
+        
+        // 成功時は自動的に友達追加を実行
+        setTimeout(() => {
+          handleAddFriend();
+        }, 1000); // 1秒後に友達追加を実行
+        
         // 成功時はフォームをクリア
         setEmail('');
         setLineUserInfo(null);
@@ -159,8 +167,24 @@ export default function LineConnectPage() {
   // 友達追加ボタンのクリック処理
   const handleAddFriend = () => {
     // LINE公式アカウントの友達追加URLを開く
-    const lineAddFriendUrl = process.env.NEXT_PUBLIC_LINE_ADD_FRIEND_URL || 'https://line.me/R/ti/p/@your_line_id';
+    const lineAddFriendUrl = process.env.NEXT_PUBLIC_LINE_ADD_FRIEND_URL || 'https://s.lmes.jp/landing-qr/2007884698-P157Mx1x?uLand=GM7TbC';
     window.open(lineAddFriendUrl, '_blank');
+    
+    // 友達追加実行フラグを設定
+    setFriendAddExecuted(true);
+    
+    // カウントダウン開始
+    let remainingTime = 5;
+    const countdownInterval = setInterval(() => {
+      remainingTime -= 1;
+      setCountdown(remainingTime);
+      
+      if (remainingTime <= 0) {
+        clearInterval(countdownInterval);
+        // ホームページにリダイレクト
+        window.location.href = 'https://ohako-fitness.com/';
+      }
+    }, 1000);
   };
 
   // 現在の段階に応じたタイトルと説明を取得
@@ -227,6 +251,28 @@ export default function LineConnectPage() {
                   <p className="mt-1 text-xs text-gray-500">
                     決済時に使用したメールアドレスを入力してください
                   </p>
+                </div>
+
+                {/* LINE IDとメールアドレス紐付けの説明 */}
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start">
+                    <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                      <svg className="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-blue-800 mb-2">
+                        LINE IDとメールアドレスの紐付けについて
+                      </h3>
+                      <div className="text-xs text-blue-700 space-y-1">
+                        <p>• サポートスタッフが個別連絡（施設の質問など）に対応いたします</p>
+                        <p>• ご連絡いただいたLINE IDとOHAKO fitness studio会員の情報を即時照会できるため、お問い合わせ内容の詳細をスムーズに確認できます</p>
+                        <p>• 新しいプログラム公開・営業日時の変更など、大切なお知らせを確実にお受け取り頂けます</p>
+                        <p>• 今後の会員限定特典や招待制度などの対象になります</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* LINEログインボタン */}
@@ -350,6 +396,27 @@ export default function LineConnectPage() {
                   </>
                 )}
               </form>
+
+              {/* 友達追加完了の案内メッセージ */}
+              {friendAddExecuted && (
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-blue-800">
+                        友達追加が完了しました！
+                      </h3>
+                      <p className="text-sm text-blue-700 mt-1">
+                        {countdown}秒後にホームページにリダイレクトします...
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* グローバルメッセージ表示（LINEログイン前後共通） */}
               {message && !lineUserInfo && (
