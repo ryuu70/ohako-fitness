@@ -1,21 +1,35 @@
 import Stripe from 'stripe';
-import { StripeCustomer, StripeCustomerSearchResponse } from '@/types';
+import { StripeCustomerSearchResponse } from '@/types';
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-if (!stripeSecretKey) {
-  console.error('STRIPE_SECRET_KEYが設定されていません');
+// Stripeの初期化を安全に行う
+let stripe: Stripe | null = null;
+
+try {
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  if (stripeSecretKey) {
+    stripe = new Stripe(stripeSecretKey, {
+      apiVersion: '2025-07-30.basil',
+    });
+    console.log('Stripe初期化完了:', {
+      hasSecretKey: true,
+      apiVersion: '2025-07-30.basil'
+    });
+  } else {
+    console.warn('STRIPE_SECRET_KEYが設定されていません - Stripe機能は無効化されます');
+  }
+} catch (error) {
+  console.error('Stripe初期化エラー:', error);
 }
 
-const stripe = new Stripe(stripeSecretKey!, {
-  apiVersion: '2025-07-30.basil',
-});
-
-console.log('Stripe初期化完了:', {
-  hasSecretKey: !!stripeSecretKey,
-  apiVersion: '2025-07-30.basil'
-});
-
 export async function findCustomerByEmail(email: string): Promise<StripeCustomerSearchResponse> {
+  if (!stripe) {
+    return {
+      success: false,
+      customers: [],
+      message: 'Stripeが初期化されていません。環境変数を確認してください。',
+    };
+  }
+
   try {
     console.log('Stripe顧客検索開始:', email);
     
@@ -61,6 +75,11 @@ export async function findCustomerByEmail(email: string): Promise<StripeCustomer
 }
 
 export async function updateCustomerLineId(customerId: string, lineId: string): Promise<boolean> {
+  if (!stripe) {
+    console.error('Stripeが初期化されていません');
+    return false;
+  }
+
   try {
     console.log('Stripe顧客更新開始:', { customerId, lineId });
     

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const envVars = {
       STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ? '設定済み' : '未設定',

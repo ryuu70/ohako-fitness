@@ -90,7 +90,7 @@ export default function LineConnectPage() {
           text: data.message || 'LINEログインURLの生成に失敗しました。',
         });
       }
-    } catch (error) {
+    } catch {
       setMessage({
         type: 'error',
         text: '接続エラーが発生しました。もう一度お試しください。',
@@ -146,7 +146,7 @@ export default function LineConnectPage() {
           text: data.message,
         });
       }
-    } catch (error) {
+    } catch {
       setMessage({
         type: 'error',
         text: '接続エラーが発生しました。もう一度お試しください。',
