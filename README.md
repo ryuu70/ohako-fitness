@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ohako Fitness - LINE連携サービス
 
-## Getting Started
+フィットネスサービスとLINEを連携して、お得な情報をお届けします。
 
-First, run the development server:
+## 機能
+
+- LINEログインによるユーザー認証
+- Stripe決済との連携
+- LINE公式アカウントへの友達追加
+- パーソナライズされたフィットネス情報の配信
+
+## セットアップ
+
+### 1. 依存関係のインストール
+
+```bash
+npm install
+```
+
+### 2. 環境変数の設定
+
+`.env.local`ファイルを作成し、以下の環境変数を設定してください：
+
+```env
+# Stripe設定
+STRIPE_SECRET_KEY=sk_test_your_secret_key_here
+STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
+
+# LINE設定
+LINE_CHANNEL_ID=your_line_channel_id_here
+LINE_CHANNEL_SECRET=your_line_channel_secret_here
+LINE_CHANNEL_ACCESS_TOKEN=your_line_channel_access_token_here
+
+# アプリケーション設定
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# LINE友達追加URL（重要！）
+NEXT_PUBLIC_LINE_ADD_FRIEND_URL=https://line.me/R/ti/p/@your_line_id
+```
+
+### 3. LINE友達追加URLの設定
+
+`NEXT_PUBLIC_LINE_ADD_FRIEND_URL`には、あなたのLINE公式アカウントの友達追加URLを設定してください。
+
+友達追加URLの取得方法：
+1. LINE Developersコンソールにログイン
+2. あなたのチャネルを選択
+3. 「Messaging API設定」タブを開く
+4. 「友だち追加用URL」をコピー
+
+### 4. 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 使用方法
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. トップページ（`/`）にアクセスすると、自動的にLINE連携ページ（`/line-connect`）にリダイレクトされます
+2. 決済時に使用したメールアドレスを入力
+3. LINEでログイン
+4. LINE公式アカウントに友達追加
+5. LINE IDとメールアドレスの連携完了
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## API エンドポイント
 
-## Learn More
+- `POST /api/line-login-url` - LINEログインURLの生成
+- `GET /api/line-callback` - LINEログインコールバック処理
+- `POST /api/line-connect` - LINE IDとメールアドレスの連携
+- `GET /api/debug/env-check` - 環境変数の確認
+- `GET /api/debug/stripe-customer` - Stripe顧客検索のテスト
 
-To learn more about Next.js, take a look at the following resources:
+## 技術スタック
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Next.js 15.5.0
+- React 19.1.0
+- TypeScript
+- Tailwind CSS v4
+- Stripe API
+- LINE Login API
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 注意事項
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- LINE IDは一度連携すると変更できません
+- 友達追加後、LINE公式アカウントからお得な情報をお届けします
+- 決済時に使用したメールアドレスを正確に入力してください
