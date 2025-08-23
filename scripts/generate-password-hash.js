@@ -25,6 +25,17 @@ function generatePasswordHash(password) {
   // 10000回の反復、64バイトの出力、SHA-512
   const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
   
+  // 長さの検証
+  if (hash.length !== 128) {
+    console.error('エラー: ハッシュの長さが不正です:', hash.length);
+    process.exit(1);
+  }
+  
+  if (salt.length !== 64) {
+    console.error('エラー: ソルトの長さが不正です:', salt.length);
+    process.exit(1);
+  }
+  
   console.log('=== 管理者パスワードハッシュ生成完了 ===');
   console.log('');
   console.log('以下の環境変数を.env.localファイルに設定してください:');
@@ -45,6 +56,8 @@ function generatePasswordHash(password) {
   console.log('✅ パスワードハッシュが生成されました');
   console.log('✅ ランダムなソルトが生成されました');
   console.log('✅ PBKDF2-SHA512（10000回反復）が使用されました');
+  console.log(`✅ ハッシュ長: ${hash.length}文字（64バイト）`);
+  console.log(`✅ ソルト長: ${salt.length}文字（32バイト）`);
   console.log('⚠️  元のパスワードを安全に保管してください');
   console.log('⚠️  このスクリプトの実行履歴を削除してください');
   console.log('⚠️  .env.localファイルをGitにコミットしないでください');

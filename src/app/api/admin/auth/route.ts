@@ -14,6 +14,7 @@ const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15分間
 
 // パスワードハッシュ化関数
 function hashPassword(password: string, salt: string): string {
+  // 出力長を64バイト（128文字のhex）に固定
   return crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
 }
 
@@ -127,13 +128,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ハッシュの長さを検証（64バイト = 128文字のhex）
+    if (ADMIN_PASSWORD_HASH.length !== 128) {
+      console.error('管理者パスワードハッシュの長さが不正:', ADMIN_PASSWORD_HASH.length);
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: '認証システムの設定が不正です。管理者に連絡してください。',
+          remainingAttempts: rateLimit.remainingAttempts
+        },
+        { status: 500 }
+      );
+    }
+
+    // ソルトの長さを検証（32バイト = 64文字のhex）
+    if (ADMIN_SALT.length !== 64) {
+      console.error('管理者パスワードソルトの長さが不正:', ADMIN_SALT.length);
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: '認証システムの設定が不正です。管理者に連絡してください。',
+          remainingAttempts: rateLimit.remainingAttempts
+        },
+        { status: 500 }
+      );
+    }
+
     // パスワード認証（ハッシュ化されたパスワードと比較）
     const hashedPassword = hashPassword(password, ADMIN_SALT);
     
-    if (crypto.timingSafeEqual(
-      Buffer.from(hashedPassword, 'hex'),
-      Buffer.from(ADMIN_PASSWORD_HASH, 'hex')
-    )) {
+    // バッファの長さを一致させてから比較
+    const expectedHashBuffer = Buffer.from(ADMIN_PASSWORD_HASH, 'hex');
+    const actualHashBuffer = Buffer.from(hashedPassword, 'hex');
+    
+    // バッファの長さが一致することを確認
+    if (expectedHashBuffer.length !== actualHashBuffer.length) {
+      console.error('ハッシュの長さが一致しません:', {
+        expected: expectedHashBuffer.length,
+        actual: actualHashBuffer.length
+      });
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: '認証システムの設定エラーが発生しました。',
+          remainingAttempts: rateLimit.remainingAttempts
+        },
+        { status: 500 }
+      );
+    }
+    
+    if (crypto.timingSafeEqual(expectedHashBuffer, actualHashBuffer)) {
       // 認証成功時はレート制限レコードをリセット
       rateLimitStore.delete(ip);
       
