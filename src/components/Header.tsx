@@ -18,12 +18,6 @@ export default function Header() {
             >
               LINE連携
             </Link>
-            <Link 
-              href="/admin-page-customer/conversions" 
-              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              コンバージョン管理
-            </Link>
           </nav>
         </div>
       </div>
