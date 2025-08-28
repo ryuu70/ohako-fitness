@@ -8,11 +8,11 @@ try {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   if (stripeSecretKey) {
     stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2025-07-30.basil',
+      apiVersion: '2025-08-27.basil',
     });
     console.log('Stripe初期化完了:', {
       hasSecretKey: true,
-      apiVersion: '2025-07-30.basil'
+      apiVersion: '2025-08-27.basil'
     });
   } else {
     console.warn('STRIPE_SECRET_KEYが設定されていません - Stripe機能は無効化されます');

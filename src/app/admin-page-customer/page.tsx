@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 
 interface CustomerData {
   customerId: string;
@@ -190,7 +189,7 @@ export default function AdminPage() {
           text: errorMessage,
         });
       }
-    } catch (error) {
+    } catch {
       setMessage({
         type: 'error',
         text: '認証エラーが発生しました。',
@@ -206,8 +205,8 @@ export default function AdminPage() {
     try {
       // 選択された項目をクエリパラメータとして送信
       const selectedFields = Object.entries(csvExportFields)
-        .filter(([_key, isSelected]) => isSelected)
-        .map(([field, _value]) => field)
+        .filter(([, isSelected]) => isSelected)
+        .map(([field]) => field)
         .join(',');
       
       const response = await fetch(`/api/admin/export-csv?fields=${selectedFields}`);
@@ -227,7 +226,7 @@ export default function AdminPage() {
         type: 'success',
         text: 'CSVファイルの出力が完了しました。',
       });
-    } catch (error) {
+    } catch {
       setMessage({
         type: 'error',
         text: 'CSV出力中にエラーが発生しました。',

@@ -1,0 +1,26 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Conversion {
+  id          String   @id @default(cuid())
+  stripeEventId String @unique
+  customerEmail String
+  amount      Int      // 金額（セント単位）
+  currency    String   @default("jpy")
+  status      String   @default("completed")
+  metadata    Json?    // 追加のメタデータ
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([customerEmail])
+  @@index([createdAt])
+}
