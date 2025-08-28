@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
 
       // 顧客情報を取得
       let customerEmail = 'unknown@example.com'
-      let customerId = subscription.customer as string
+      const customerId = subscription.customer as string
       
       try {
         const customer = await stripe.customers.retrieve(customerId)
@@ -136,16 +136,11 @@ export async function POST(req: NextRequest) {
           subscriptionId: subscription.id,
           customerId: customerId,
           status: subscription.status,
-          currentPeriodStart: subscription.current_period_start,
-          currentPeriodEnd: subscription.current_period_end,
           planId: subscription.items.data[0]?.price?.id || null,
           planName: subscription.items.data[0]?.price?.nickname || null,
           interval: subscription.items.data[0]?.price?.recurring?.interval || null,
           intervalCount: subscription.items.data[0]?.price?.recurring?.interval_count || null,
-          trialEnd: subscription.trial_end,
-          cancelAtPeriodEnd: subscription.cancel_at_period_end,
-          created: subscription.created,
-          startDate: subscription.start_date
+          created: subscription.created || null
         }
       }
 
