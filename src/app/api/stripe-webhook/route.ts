@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
         console.error('Failed to retrieve customer:', error)
       }
 
-      // サブスクリプションの金額を計算
+      // サブスクリプションの金額を計算（Stripeはセント単位で保存）
       const amount = subscription.items.data.reduce((total, item) => {
         return total + (item.price?.unit_amount || 0)
       }, 0)
