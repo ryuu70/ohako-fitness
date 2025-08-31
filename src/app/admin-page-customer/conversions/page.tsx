@@ -114,12 +114,20 @@ export default function ConversionsPage() {
   }
 
   const formatAmount = (amount: number, currency: string) => {
-    // Stripeの金額はセント単位で保存されているため、100で割って円単位に変換
-    const amountInYen = amount / 100
+    // 日本円の場合は円単位で保存されているため、そのまま使用
+    // 他の通貨の場合は必要に応じて変換処理を追加
+    let displayAmount = amount
+    
+    // 日本円以外の通貨でセント単位の場合の処理
+    if (currency.toLowerCase() !== 'jpy') {
+      // USD, EUR等の場合は100で割る
+      displayAmount = amount / 100
+    }
+    
     return new Intl.NumberFormat('ja-JP', {
       style: 'currency',
       currency: currency.toUpperCase()
-    }).format(amountInYen)
+    }).format(displayAmount)
   }
 
   // ログイン処理
