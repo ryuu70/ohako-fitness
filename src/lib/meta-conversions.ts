@@ -3,6 +3,7 @@ import crypto from 'crypto'
 interface MetaConversionData {
   event_name: string
   event_time: number
+  action_source: string
   user_data: {
     em?: string[] // ハッシュ化されたメールアドレス
     ph?: string[] // ハッシュ化された電話番号
@@ -10,12 +11,11 @@ interface MetaConversionData {
     client_user_agent?: string
   }
   custom_data?: {
-    value?: number
+    value?: string // 公式ドキュメントでは文字列として送信
     currency?: string
     content_type?: string
     content_ids?: string[]
   }
-  action_source: string
   event_id?: string
 }
 
@@ -48,7 +48,7 @@ export async function sendMetaConversion(
     ipAddress?: string
   }
 ): Promise<MetaConversionResponse> {
-  const endpoint = `https://graph.facebook.com/v18.0/${pixelId}/events`
+  const endpoint = `https://graph.facebook.com/v18.0/${pixelId}/events?access_token=${accessToken}`
   
   // ユーザーデータを準備
   const userData: MetaConversionData['user_data'] = {}
@@ -69,24 +69,23 @@ export async function sendMetaConversion(
     userData.client_user_agent = conversionData.userAgent
   }
 
-  // コンバージョンデータを構築
+  // コンバージョンデータを構築（公式ドキュメントの構造に合わせる）
   const metaData: MetaConversionData = {
     event_name: 'Purchase',
     event_time: Math.floor(Date.now() / 1000),
+    action_source: 'website',
     user_data: userData,
     custom_data: {
-      value: conversionData.amount / 100, // Stripeはセント単位なので円に変換
+      value: (conversionData.amount / 100).toFixed(2), // Stripeはセント単位なので円に変換し、文字列として送信
       currency: conversionData.currency.toUpperCase(),
       content_type: 'product',
       content_ids: ['stripe_purchase']
     },
-    action_source: 'website',
     event_id: conversionData.eventId
   }
 
   const requestBody = {
-    data: [metaData],
-    access_token: accessToken
+    data: [metaData]
   }
 
   try {
@@ -94,8 +93,12 @@ export async function sendMetaConversion(
       pixelId,
       eventId: conversionData.eventId,
       amount: conversionData.amount,
-      currency: conversionData.currency
+      currency: conversionData.currency,
+      hasEmail: !!conversionData.customerEmail,
+      hasPhone: !!conversionData.customerPhone
     })
+
+    console.log('Meta API request payload:', JSON.stringify(requestBody, null, 2))
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -134,7 +137,7 @@ export async function sendTestMetaConversion(
 ): Promise<MetaConversionResponse> {
   return sendMetaConversion(accessToken, pixelId, {
     customerEmail: 'test@example.com',
-    amount: 1000, // 10円
+    amount: 1000, // 10円（Stripeのセント単位）
     currency: 'jpy',
     eventId: `test_${Date.now()}`,
     userAgent: 'Test User Agent',
