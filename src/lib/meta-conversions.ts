@@ -25,6 +25,11 @@ interface MetaConversionResponse {
   fbtrace_id: string
 }
 
+interface MetaConversionRequestBody {
+  data: MetaConversionData[]
+  test_event_code?: string
+}
+
 /**
  * 文字列をSHA256でハッシュ化する
  */
@@ -85,7 +90,7 @@ export async function sendMetaConversion(
     event_id: conversionData.eventId
   }
 
-  const requestBody: any = {
+  const requestBody: MetaConversionRequestBody = {
     data: [metaData]
   }
 
