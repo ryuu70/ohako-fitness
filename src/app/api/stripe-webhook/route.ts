@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
+import { sendMetaConversion } from '@/lib/meta-conversions'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil',
 })
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+
+// Meta API設定
+const metaAccessToken = process.env.META_ACCESS_TOKEN
+const metaPixelId = process.env.META_PIXEL_ID
 
 export async function POST(req: NextRequest) {
   console.log('Webhook received:', new Date().toISOString())
@@ -87,6 +92,32 @@ export async function POST(req: NextRequest) {
       })
 
       console.log('Conversion created:', conversion)
+
+      // Meta APIにコンバージョンデータを送信
+      if (metaAccessToken && metaPixelId) {
+        try {
+          const metaResult = await sendMetaConversion(
+            metaAccessToken,
+            metaPixelId,
+            {
+              customerEmail: session.customer_details?.email || undefined,
+              customerPhone: session.customer_details?.phone || undefined,
+              amount: session.amount_total || 0,
+              currency: session.currency || 'jpy',
+              eventId: event.id,
+              userAgent: req.headers.get('user-agent') || undefined,
+              ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined
+            }
+          )
+          console.log('Meta conversion sent successfully:', metaResult)
+        } catch (metaError) {
+          console.error('Failed to send Meta conversion:', metaError)
+          // Meta APIのエラーは決済処理を停止させない
+        }
+      } else {
+        console.log('Meta API credentials not configured, skipping Meta conversion')
+      }
+
       return NextResponse.json({ 
         status: 'success', 
         conversionId: conversion.id 
@@ -150,6 +181,31 @@ export async function POST(req: NextRequest) {
       })
 
       console.log('Subscription conversion created:', conversion)
+
+      // Meta APIにコンバージョンデータを送信
+      if (metaAccessToken && metaPixelId) {
+        try {
+          const metaResult = await sendMetaConversion(
+            metaAccessToken,
+            metaPixelId,
+            {
+              customerEmail: customerEmail,
+              amount: amount,
+              currency: subscription.currency || 'jpy',
+              eventId: event.id,
+              userAgent: req.headers.get('user-agent') || undefined,
+              ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined
+            }
+          )
+          console.log('Meta subscription conversion sent successfully:', metaResult)
+        } catch (metaError) {
+          console.error('Failed to send Meta subscription conversion:', metaError)
+          // Meta APIのエラーは決済処理を停止させない
+        }
+      } else {
+        console.log('Meta API credentials not configured, skipping Meta subscription conversion')
+      }
+
       return NextResponse.json({ 
         status: 'success', 
         conversionId: conversion.id 

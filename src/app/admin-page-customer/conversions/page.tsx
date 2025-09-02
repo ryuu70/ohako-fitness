@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 
@@ -59,13 +59,7 @@ export default function ConversionsPage() {
     }
   }, [])
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchConversions()
-    }
-  }, [isAuthenticated, pagination.page, filters.email, filters.startDate, filters.endDate])
-
-  const fetchConversions = async () => {
+  const fetchConversions = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -87,7 +81,13 @@ export default function ConversionsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [pagination.page, pagination.limit, filters.email, filters.startDate, filters.endDate])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchConversions()
+    }
+  }, [isAuthenticated, fetchConversions])
 
   const handleExport = async () => {
     try {
