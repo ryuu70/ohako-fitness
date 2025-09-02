@@ -46,6 +46,7 @@ export async function sendMetaConversion(
     eventId: string
     userAgent?: string
     ipAddress?: string
+    testEventCode?: string // テストイベント用のコード
   }
 ): Promise<MetaConversionResponse> {
   const endpoint = `https://graph.facebook.com/v18.0/${pixelId}/events?access_token=${accessToken}`
@@ -84,8 +85,13 @@ export async function sendMetaConversion(
     event_id: conversionData.eventId
   }
 
-  const requestBody = {
+  const requestBody: any = {
     data: [metaData]
+  }
+
+  // test_event_codeはリクエストボディのルートレベルに配置
+  if (conversionData.testEventCode) {
+    requestBody.test_event_code = conversionData.testEventCode
   }
 
   try {
@@ -113,9 +119,10 @@ export async function sendMetaConversion(
       console.error('Meta API error:', {
         status: response.status,
         statusText: response.statusText,
-        body: errorText
+        body: errorText,
+        requestPayload: JSON.stringify(requestBody, null, 2)
       })
-      throw new Error(`Meta API error: ${response.status} ${response.statusText}`)
+      throw new Error(`Meta API error: ${response.status} ${response.statusText} - ${errorText}`)
     }
 
     const result: MetaConversionResponse = await response.json()
