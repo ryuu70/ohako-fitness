@@ -15,6 +15,7 @@ interface MetaConversionData {
     currency?: string
     content_type?: string
     content_ids?: string[]
+    campaign_id?: string // キャンペーンID
   }
   event_id?: string
 }
@@ -52,6 +53,7 @@ export async function sendMetaConversion(
     userAgent?: string
     ipAddress?: string
     testEventCode?: string // テストイベント用のコード
+    campaignId?: string // キャンペーンID
   }
 ): Promise<MetaConversionResponse> {
   const endpoint = `https://graph.facebook.com/v18.0/${pixelId}/events?access_token=${accessToken}`
@@ -85,7 +87,8 @@ export async function sendMetaConversion(
       value: (conversionData.amount / 100).toFixed(2), // Stripeはセント単位なので円に変換し、文字列として送信
       currency: conversionData.currency.toUpperCase(),
       content_type: 'product',
-      content_ids: ['stripe_purchase']
+      content_ids: ['stripe_purchase'],
+      ...(conversionData.campaignId && { campaign_id: conversionData.campaignId })
     },
     event_id: conversionData.eventId
   }

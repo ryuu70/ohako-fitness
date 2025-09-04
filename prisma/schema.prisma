@@ -17,10 +17,26 @@ model Conversion {
   amount      Int      // 金額（セント単位）
   currency    String   @default("jpy")
   status      String   @default("completed")
+  campaignId  String?  // キャンペーンID
   metadata    Json?    // 追加のメタデータ
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([customerEmail])
   @@index([createdAt])
+  @@index([campaignId])
+}
+
+model CampaignMapping {
+  id              String   @id @default(cuid())
+  campaignId      String   @unique // Stripeのcampaign_id
+  metaPixelId     String   // Meta広告のピクセルID
+  metaAccessToken String   // Meta広告のアクセストークン
+  campaignName    String?  // キャンペーン名
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([campaignId])
+  @@index([isActive])
 }

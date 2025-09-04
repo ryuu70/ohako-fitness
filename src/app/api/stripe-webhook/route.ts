@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
-import { sendMetaConversion } from '@/lib/meta-conversions'
+import { sendCampaignConversion, sendDefaultConversion } from '@/lib/campaign-conversion'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil',
 })
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
-
-// Meta API設定
-const metaAccessToken = process.env.META_ACCESS_TOKEN
-const metaPixelId = process.env.META_PIXEL_ID
 
 export async function POST(req: NextRequest) {
   console.log('Webhook received:', new Date().toISOString())
@@ -60,16 +56,21 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ status: 'already_processed' })
       }
 
+      // campaign_idを取得
+      const campaignId = session.metadata?.campaign_id
+
       // コンバージョンデータを作成
       const conversionData = {
         stripeEventId: event.id,
         customerEmail: session.customer_details?.email || 'unknown@example.com',
         amount: session.amount_total || 0,
         currency: session.currency || 'jpy',
+        campaignId: campaignId, // キャンペーンIDを追加
         metadata: {
           sessionId: session.id,
           customerId: typeof session.customer === 'string' ? session.customer : session.customer?.id || null,
           paymentStatus: session.payment_status,
+          campaignId: campaignId, // メタデータにも追加
           customerDetails: session.customer_details ? {
             email: session.customer_details.email,
             name: session.customer_details.name,
@@ -93,29 +94,46 @@ export async function POST(req: NextRequest) {
 
       console.log('Conversion created:', conversion)
 
-      // Meta APIにコンバージョンデータを送信
-      if (metaAccessToken && metaPixelId) {
-        try {
-          const metaResult = await sendMetaConversion(
-            metaAccessToken,
-            metaPixelId,
-            {
-              customerEmail: session.customer_details?.email || undefined,
-              customerPhone: session.customer_details?.phone || undefined,
-              amount: session.amount_total || 0,
-              currency: session.currency || 'jpy',
-              eventId: event.id,
-              userAgent: req.headers.get('user-agent') || undefined,
-              ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined
-            }
-          )
-          console.log('Meta conversion sent successfully:', metaResult)
-        } catch (metaError) {
-          console.error('Failed to send Meta conversion:', metaError)
-          // Meta APIのエラーは決済処理を停止させない
+      // キャンペーン別のMeta API送信
+      try {
+        if (campaignId) {
+          // キャンペーンIDがある場合、キャンペーン別送信
+          const campaignResult = await sendCampaignConversion(campaignId, {
+            customerEmail: session.customer_details?.email || undefined,
+            customerPhone: session.customer_details?.phone || undefined,
+            amount: session.amount_total || 0,
+            currency: session.currency || 'jpy',
+            eventId: event.id,
+            userAgent: req.headers.get('user-agent') || undefined,
+            ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined
+          })
+          
+          if (campaignResult.success) {
+            console.log(`Campaign conversion sent successfully for campaign ${campaignId}`)
+          } else {
+            console.error(`Failed to send campaign conversion for campaign ${campaignId}:`, campaignResult.error)
+          }
+        } else {
+          // キャンペーンIDがない場合、デフォルト送信
+          const defaultResult = await sendDefaultConversion({
+            customerEmail: session.customer_details?.email || undefined,
+            customerPhone: session.customer_details?.phone || undefined,
+            amount: session.amount_total || 0,
+            currency: session.currency || 'jpy',
+            eventId: event.id,
+            userAgent: req.headers.get('user-agent') || undefined,
+            ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined
+          })
+          
+          if (defaultResult.success) {
+            console.log('Default conversion sent successfully')
+          } else {
+            console.error('Failed to send default conversion:', defaultResult.error)
+          }
         }
-      } else {
-        console.log('Meta API credentials not configured, skipping Meta conversion')
+      } catch (metaError) {
+        console.error('Failed to send Meta conversion:', metaError)
+        // Meta APIのエラーは決済処理を停止させない
       }
 
       return NextResponse.json({ 
@@ -156,17 +174,22 @@ export async function POST(req: NextRequest) {
         return total + (item.price?.unit_amount || 0)
       }, 0)
 
+      // campaign_idを取得（サブスクリプションのメタデータから）
+      const campaignId = subscription.metadata?.campaign_id
+
       // コンバージョンデータを作成
       const conversionData = {
         stripeEventId: event.id,
         customerEmail: customerEmail,
         amount: amount,
         currency: subscription.currency || 'jpy',
+        campaignId: campaignId, // キャンペーンIDを追加
         metadata: {
           eventType: 'customer.subscription.created',
           subscriptionId: subscription.id,
           customerId: customerId,
           status: subscription.status,
+          campaignId: campaignId, // メタデータにも追加
           planId: subscription.items.data[0]?.price?.id || null,
           planName: subscription.items.data[0]?.price?.nickname || null,
           interval: subscription.items.data[0]?.price?.recurring?.interval || null,
@@ -182,28 +205,44 @@ export async function POST(req: NextRequest) {
 
       console.log('Subscription conversion created:', conversion)
 
-      // Meta APIにコンバージョンデータを送信
-      if (metaAccessToken && metaPixelId) {
-        try {
-          const metaResult = await sendMetaConversion(
-            metaAccessToken,
-            metaPixelId,
-            {
-              customerEmail: customerEmail,
-              amount: amount,
-              currency: subscription.currency || 'jpy',
-              eventId: event.id,
-              userAgent: req.headers.get('user-agent') || undefined,
-              ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined
-            }
-          )
-          console.log('Meta subscription conversion sent successfully:', metaResult)
-        } catch (metaError) {
-          console.error('Failed to send Meta subscription conversion:', metaError)
-          // Meta APIのエラーは決済処理を停止させない
+      // キャンペーン別のMeta API送信
+      try {
+        if (campaignId) {
+          // キャンペーンIDがある場合、キャンペーン別送信
+          const campaignResult = await sendCampaignConversion(campaignId, {
+            customerEmail: customerEmail,
+            amount: amount,
+            currency: subscription.currency || 'jpy',
+            eventId: event.id,
+            userAgent: req.headers.get('user-agent') || undefined,
+            ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined
+          })
+          
+          if (campaignResult.success) {
+            console.log(`Campaign subscription conversion sent successfully for campaign ${campaignId}`)
+          } else {
+            console.error(`Failed to send campaign subscription conversion for campaign ${campaignId}:`, campaignResult.error)
+          }
+        } else {
+          // キャンペーンIDがない場合、デフォルト送信
+          const defaultResult = await sendDefaultConversion({
+            customerEmail: customerEmail,
+            amount: amount,
+            currency: subscription.currency || 'jpy',
+            eventId: event.id,
+            userAgent: req.headers.get('user-agent') || undefined,
+            ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined
+          })
+          
+          if (defaultResult.success) {
+            console.log('Default subscription conversion sent successfully')
+          } else {
+            console.error('Failed to send default subscription conversion:', defaultResult.error)
+          }
         }
-      } else {
-        console.log('Meta API credentials not configured, skipping Meta subscription conversion')
+      } catch (metaError) {
+        console.error('Failed to send Meta subscription conversion:', metaError)
+        // Meta APIのエラーは決済処理を停止させない
       }
 
       return NextResponse.json({ 
